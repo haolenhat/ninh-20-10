@@ -1,0 +1,439 @@
+/* App Layout */
+.app {
+  min-height: 100vh;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-header {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.app-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.app-main {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 1.5rem;
+  padding: 1rem;
+  flex: 1;
+  height: 100%;
+  min-height: 0; /* allow children to overflow scroll instead of growing */
+  overflow: hidden;
+}
+
+.video-section {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.controls-section {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+  height: fit-content;
+  overflow-y: auto;
+}
+
+.app-footer {
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.app-footer p {
+  margin: 0;
+  opacity: 0.8;
+  font-size: 0.8rem;
+}
+
+/* Background Remover Styles */
+.background-remover {
+  width: 100%;
+  height: 100%;
+}
+
+.video-container {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  height: 80%;
+  min-height: 0;
+}
+
+.fullscreen-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.fullscreen-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.fullscreen-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Fullscreen styles */
+.video-container:fullscreen {
+  background: black;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.video-container:fullscreen .video-output {
+  border-radius: 0;
+  border: none;
+}
+
+.video-container:fullscreen .fullscreen-btn {
+  top: 20px;
+  right: 20px;
+}
+
+.video-output {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the video horizontally */
+}
+
+.video-input {
+  transform: scaleX(-1); /* Mirror the input video horizontally */
+}
+
+.controls {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.camera-btn {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.camera-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+}
+
+.camera-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.capture-btn {
+  background: linear-gradient(45deg, #00b894, #00a085);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+}
+
+.capture-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+}
+
+.capture-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.capture-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Distance Indicator */
+.distance-indicator {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.distance-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.distance-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #00b894;
+  background: rgba(0, 184, 148, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 184, 148, 0.3);
+}
+
+.distance-status-text {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.distance-status-text.in-range {
+  color: #00b894;
+  background: rgba(0, 184, 148, 0.1);
+  border: 1px solid rgba(0, 184, 148, 0.3);
+}
+
+.distance-status-text.out-of-range {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.distance-hint {
+  font-size: 0.9rem;
+  color: #b2bec3;
+  line-height: 1.4;
+}
+
+.camera-btn.stop {
+  background: linear-gradient(45deg, #ff4757, #c44569);
+}
+
+/* Background Selector Styles */
+.background-selector h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.background-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.background-option {
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.background-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.background-option.selected {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3);
+}
+
+.background-thumbnail {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  display: block;
+}
+
+.no-background-thumbnail,
+.custom-background-thumbnail {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.custom-background-thumbnail {
+  background: linear-gradient(45deg, #74b9ff, #0984e3);
+  color: white;
+  font-size: 1.5rem;
+}
+
+.blur-background-thumbnail {
+  background: linear-gradient(45deg, #a29bfe, #6c5ce7);
+  color: white;
+  font-size: 1.5rem;
+}
+
+.background-name {
+  display: block;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Upload Section */
+.custom-upload-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.custom-upload-section h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.upload-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.upload-btn {
+  display: inline-block;
+  background: linear-gradient(45deg, #00b894, #00a085);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
+}
+
+.url-input-field {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.url-input-field::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .app-main {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .controls-section {
+    order: -1;
+    max-height: 40vh;
+  }
+  
+  .video-section {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .app-header p {
+    font-size: 0.8rem;
+  }
+  
+  .app-main {
+    padding: 0.5rem;
+  }
+  
+  .background-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .controls-section {
+    max-height: 35vh;
+  }
+}
