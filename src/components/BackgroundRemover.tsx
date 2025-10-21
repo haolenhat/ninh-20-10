@@ -111,7 +111,47 @@ const BackgroundRemover: React.FC<BackgroundRemoverProps> = ({
     };
   }, []);
 
-  // Simple pose analysis based on body proportions and position
+  // Flood fill algorithm to find connected person areas
+  const floodFillPerson = useCallback((data: Uint8ClampedArray, visited: boolean[], startX: number, startY: number, width: number, height: number) => {
+    const stack = [{ x: startX, y: startY }];
+    let minX = startX, maxX = startX, minY = startY, maxY = startY;
+    let area = 0;
+    let centerX = 0, centerY = 0;
+    
+    while (stack.length > 0) {
+      const { x, y } = stack.pop()!;
+      const index = y * width + x;
+      
+      if (visited[index] || x < 0 || x >= width || y < 0 || y >= height) continue;
+      
+      const pixelIndex = (y * width + x) * 4;
+      const alpha = data[pixelIndex + 3];
+      
+      if (alpha <= 128) continue; // Not a person pixel
+      
+      visited[index] = true;
+      area++;
+      centerX += x;
+      centerY += y;
+      
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      
+      // Add neighbors to stack
+      stack.push({ x: x + 1, y }, { x: x - 1, y }, { x, y: y + 1 }, { x, y: y - 1 });
+    }
+    
+    return {
+      minX, maxX, minY, maxY,
+      area,
+      centerX: centerX / area,
+      centerY: centerY / area
+    };
+  }, []);
+
+  // Simple pose analysis based on body proportions and position - only for closest person
   const analyzePose = useCallback((segmentationMask: any, imageWidth: number, imageHeight: number) => {
     try {
       // Create a temporary canvas to analyze the mask
@@ -129,38 +169,50 @@ const BackgroundRemover: React.FC<BackgroundRemoverProps> = ({
       const imageData = tempCtx.getImageData(0, 0, imageWidth, imageHeight);
       const data = imageData.data;
       
-      let minX = imageWidth, maxX = 0, minY = imageHeight, maxY = 0;
-      let personPixels = 0;
+      // Find all person areas and select the largest one (closest person)
+      const personAreas: Array<{
+        minX: number, maxX: number, minY: number, maxY: number,
+        area: number, centerX: number, centerY: number
+      }> = [];
       
-      // Find bounding box and count person pixels
+      // Use flood fill to find connected components
+      const visited = new Array(imageWidth * imageHeight).fill(false);
+      
       for (let y = 0; y < imageHeight; y++) {
         for (let x = 0; x < imageWidth; x++) {
           const index = (y * imageWidth + x) * 4;
           const alpha = data[index + 3];
           
-          if (alpha > 128) { // Person pixel
-            personPixels++;
-            minX = Math.min(minX, x);
-            maxX = Math.max(maxX, x);
-            minY = Math.min(minY, y);
-            maxY = Math.max(maxY, y);
+          if (alpha > 128 && !visited[y * imageWidth + x]) {
+            // Found a person pixel, flood fill to find the entire person
+            const personArea = floodFillPerson(data, visited, x, y, imageWidth, imageHeight);
+            if (personArea.area > 1000) { // Minimum area threshold
+              personAreas.push(personArea);
+            }
           }
         }
       }
       
-      if (personPixels === 0) return null;
+      if (personAreas.length === 0) return null;
       
-      // Calculate body proportions
-      const bodyWidth = maxX - minX;
-      const bodyHeight = maxY - minY;
+      // Find the largest person area (closest person)
+      const closestPerson = personAreas.reduce((largest, current) => 
+        current.area > largest.area ? current : largest
+      );
+      
+      console.log(`Found ${personAreas.length} person(s), closest person area: ${closestPerson.area.toFixed(0)} pixels`);
+      
+      // Calculate body proportions for the closest person
+      const bodyWidth = closestPerson.maxX - closestPerson.minX;
+      const bodyHeight = closestPerson.maxY - closestPerson.minY;
       const aspectRatio = bodyHeight / bodyWidth;
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
+      const centerX = closestPerson.centerX;
+      const centerY = closestPerson.centerY;
       const relativeCenterX = centerX / imageWidth;
       const relativeCenterY = centerY / imageHeight;
       
       // Calculate body area ratio
-      const bodyArea = bodyWidth * bodyHeight;
+      const bodyArea = closestPerson.area;
       const totalArea = imageWidth * imageHeight;
       const areaRatio = bodyArea / totalArea;
       
@@ -242,37 +294,43 @@ const BackgroundRemover: React.FC<BackgroundRemoverProps> = ({
       const imageData = tempCtx.getImageData(0, 0, imageWidth, imageHeight);
       const data = imageData.data;
       
-      let personPixels = 0;
-      let totalPixels = imageWidth * imageHeight;
+      // Find all person areas and select the largest one (closest person)
+      const personAreas: Array<{
+        minX: number, maxX: number, minY: number, maxY: number,
+        area: number, centerX: number, centerY: number
+      }> = [];
       
-      // Count white pixels (person area)
-      let minX = imageWidth, maxX = 0, minY = imageHeight, maxY = 0;
-      let hasPerson = false;
+      // Use flood fill to find connected components
+      const visited = new Array(imageWidth * imageHeight).fill(false);
       
-      for (let i = 0; i < data.length; i += 4) {
-        const a = data[i + 3]; // alpha channel
-        // Alpha near 255 means person area in MediaPipe mask
-        if (a > 200) {
-          personPixels++;
-          hasPerson = true;
+      for (let y = 0; y < imageHeight; y++) {
+        for (let x = 0; x < imageWidth; x++) {
+          const index = (y * imageWidth + x) * 4;
+          const alpha = data[index + 3];
           
-          // Calculate bounding box
-          const x = (i / 4) % imageWidth;
-          const y = Math.floor((i / 4) / imageWidth);
-          
-          minX = Math.min(minX, x);
-          maxX = Math.max(maxX, x);
-          minY = Math.min(minY, y);
-          maxY = Math.max(maxY, y);
+          if (alpha > 200 && !visited[y * imageWidth + x]) {
+            // Found a person pixel, flood fill to find the entire person
+            const personArea = floodFillPerson(data, visited, x, y, imageWidth, imageHeight);
+            if (personArea.area > 1000) { // Minimum area threshold
+              personAreas.push(personArea);
+            }
+          }
         }
       }
       
-      // Calculate person area ratio
-      const personRatio = personPixels / totalPixels;
+      if (personAreas.length === 0) return 2.5; // No person detected
+      
+      // Find the largest person area (closest person)
+      const closestPerson = personAreas.reduce((largest, current) => 
+        current.area > largest.area ? current : largest
+      );
+      
+      // Calculate person area ratio for closest person only
+      const personRatio = closestPerson.area / (imageWidth * imageHeight);
       
       // Calculate bounding box area as backup method
-      const boundingBoxArea = hasPerson ? (maxX - minX) * (maxY - minY) : 0;
-      const boundingBoxRatio = boundingBoxArea / totalPixels;
+      const boundingBoxArea = (closestPerson.maxX - closestPerson.minX) * (closestPerson.maxY - closestPerson.minY);
+      const boundingBoxRatio = boundingBoxArea / (imageWidth * imageHeight);
       
       // Debug logging (disabled)
       // console.log(`Person pixels: ${personPixels}, Total pixels: ${totalPixels}, Ratio: ${personRatio.toFixed(4)}`);
